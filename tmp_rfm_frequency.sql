@@ -1,10 +1,10 @@
 insert into analysis.tmp_rfm_frequency 
-with u as (
-select orders.user_id,
-       count(*) as order_count                  
-from production.orders
-where orders.order_ts > '2022-01-01' and orders.status = 4
-group by orders.user_id)
-select u.user_id,
-       ntile(5) over (order by u.order_count) frequency
-from u;
+select id as user_id,
+		ntile(5) over (order by count(o.order_ts)) as frequency
+from analysis.users u
+left join (select order_ts,
+		   		  user_id
+		   from analysis.orders
+		   where status = 4 and extract(year from order_ts) = 2022) o
+	on u.id=o.user_id
+group by id;

@@ -1,10 +1,10 @@
-insert into analysis.tmp_rfm_recency 
-with u as (
-select user_id,
-       max(orders.order_ts) as last_order_ts                  
-from production.orders
-where order_ts > '2022-01-01' and status = 4
-group by user_id)
-select u.user_id,
-       ntile(5) over (order by (select max(orders.order_ts) from production.orders) - u.last_order_ts desc) recency
-from u;
+insert into analysis.tmp_rfm_recency
+select id as user_id,
+		ntile(5) over (order by MAX(o.order_ts) nulls first) as recency
+from analysis.users u
+left join (select order_ts,
+		          user_id
+		   from analysis.orders
+		   where status = 4 and extract(year from order_ts) = 2022) o
+	on u.id=o.user_id
+group by id;
